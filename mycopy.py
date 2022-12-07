@@ -60,7 +60,8 @@ def copy(source, dest):
     file_list = os.listdir(source)
     # print("--------------------------------------------------------")
     # print("le dossier "+From+"/contient:"+str(Listfile))
-    ################## gestion des inodes #####################
+
+    # gestion des inodes
 
     # si elle contient un dossier
 

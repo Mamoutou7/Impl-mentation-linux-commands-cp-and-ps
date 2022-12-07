@@ -84,12 +84,12 @@ def x_pid():
     :return:
     """
     list_pid = []
-    ##########################################
+
     # PID des processus utilisateur non lance
     # dans un terminal. c'est a dire le PID
     # des process dont le TTY ne contient pas
     # "tty" et l'USER = nom de l'utilisateur
-    ##########################################
+
     for pid in all_pid():
 
         file = open('/proc/'+str(pid)+'/stat','r')
@@ -136,20 +136,20 @@ def tty_process(tty_nr):
     :param tty_nr:
     :return:
     """
-    ##########################################
+
     # creation d'un dico contenant pour chaque
     # device son TTY.  Ayant comme cle
     # le numero du device et comme valeur son
     # TTY. et si le TTY du device ne commence
     # pas par pts ou tty alors il sera egal a
     # '?'.
-    ##########################################
     tty={}
+
     try:
         for i in os.listdir('/dev/pts'):
             devSRC='/dev/pts/'+i
             tty[os.stat(devSRC).st_rdev]=i
-        TTY='pts/'+tty[tty_nr]
+        TTY ='pts/'+tty[tty_nr]
     except:
         for i in os.listdir('/dev/'):
             devSRC='/dev/'+i
@@ -164,28 +164,30 @@ def tty_process(tty_nr):
             TTY='?'
     if TTY[0:3]!='pts' and TTY[0:3]!='tty':
         TTY ='?'
+
     return TTY
 
-#############################################################################################
-                                                                #CALCUL DU CPU D'UN PROCESSUS
-#############################################################################################
-def CPUTIME(PID):
-    ##########################################
-    # on recupere l'UTIME dans /proc/pid/stat
-    # ainsi que le STIME
-    # on fait le rapport(UTIME+STIME)/USERCLCK
-    # on decoupe en heure sec min
-    # on met sous format hh:mm:ss
-    ##########################################
-    File=open('/proc/'+PID+'/stat','r')
-    parseFile=File.readlines()[0].split()
-    File.close()
-    UTIME=int(parseFile[13])
-    STIME=int(parseFile[14])
+def CPUTIME(pid):
+    """
+    CALCUL DU CPU D'UN PROCESSUS
 
-    TIME=int((UTIME+STIME)/USERCLCK)
-    TIME=decoupe(TIME)
-    return TIME[0]+':'+TIME[1]+':'+TIME[2]
+    :param pid:
+    :return:
+    """
+
+    with open('/proc/'+str(pid)+'/stat','r') as file:
+        parse_file= file.readlines()[0].split()
+        # on recupere l'UTIME dans /proc/pid/stat
+        UTIME = int(parse_file[13])
+        # ainsi que le STIME
+        STIME = int(parse_file[14])
+
+        # on fait le rapport(UTIME+STIME)/USERCLCK
+        TIME = int((UTIME+STIME)/USERCLCK)
+        # on decoupe en heure sec min
+        TIME = decoupe(TIME)
+        # on met sous format hh:mm:ss
+        return TIME[0]+':'+TIME[1]+':'+TIME[2]
 
 
 def MEMOIRE(RSS):
@@ -302,7 +304,7 @@ def PSU(pid):
 
 
 
-#creation des option avec optparse
+# creation des option avec optparse
 parser = OptionParser()
 parser.add_option('-e', dest="e", help="affiche tout les processus",
     action='store_true' )
@@ -317,13 +319,13 @@ option, argument = parser.parse_args()
 
 
 # gestion de l'execution de la commande
-NONEFORMAT='PID      TTY      STAT     TIME  COMMAND'
-USERFORMAT="USER     PID      %CPU %MEM VSZ      RSS      TTY      STAT  START     TIME      COMMAND"
+NONEFORMAT = 'PID      TTY      STAT     TIME  COMMAND'
+USERFORMAT = "USER     PID      %CPU %MEM VSZ      RSS      TTY      STAT  START     TIME      COMMAND"
 
-#option -aux ou option -eu
+# option -aux ou option -eu
 if (option.e and option.u)or (option.a and option.u and option.x):
     print(USERFORMAT[:columns])
-    for pid in all_pid():         #on affiche tous les Processus
+    for pid in all_pid():         # on affiche tous les Processus
         PSU(pid)
 
 # option ax ou option e
@@ -332,35 +334,14 @@ elif option.e or (option.a and option.x):
     # on affiche tous les Processus
     for pid in all_pid():
         cmd_ps(pid)
-###############################################################
-                                                    #option -ua
-###############################################################
+
+# option -ua
 elif option.u and option.a:
     print(USERFORMAT[:columns])
     # le cas d'ajout d'autres PID
     if len(sys.argv) > 2:
         i=0
-        list_pid = []   #permet d'eviter les affichages  en double
-        while i < len(sys.argv):
-            try:
-                int(sys.argv[i])
-                pid = sys.argv[i]
-                if pid not in list_pid:
-                    PSU(pid)
-                list_pid+=[pid]
-            except:
-                pass
-            i+=1
-    #on affiche les resultats de l'otion
-    for pid in a_pid():
-        PSU(pid)
-
-#option -ux
-elif option.u and option.x:
-    print(USERFORMAT[:columns])
-    if len(sys.argv) > 2:          #le cas d'ajout d'autres PID
-        i=0
-        list_pid = []   #permet d'eviter les affichages  en double
+        list_pid = []   # permet d'eviter les affichages  en double
         while i < len(sys.argv):
             try:
                 int(sys.argv[i])
@@ -371,18 +352,40 @@ elif option.u and option.x:
             except:
                 pass
             i+=1
-    for pid in x_pid():     #on affiche les resultats de l'otion
+    # on affiche les resultats de l'otion
+    for pid in a_pid():
         PSU(pid)
-###############################################################
-                                                     #option -a
-###############################################################
+
+# option -ux
+elif option.u and option.x:
+    print(USERFORMAT[:columns])
+    if len(sys.argv) > 2:          # le cas d'ajout d'autres PID
+        i = 0
+        list_pid = []   # permet d'eviter les affichages  en double
+        while i < len(sys.argv):
+            try:
+                int(sys.argv[i])
+                pid = sys.argv[i]
+                if pid not in list_pid:
+                    PSU(pid)
+                list_pid += [pid]
+            except:
+                pass
+            i += 1
+    # on affiche les resultats de l'otion
+    for pid in x_pid():
+        PSU(pid)
+
+# option -a
 elif option.a:
     print(NONEFORMAT[:columns])
 
-    if len(sys.argv) > 2:          #le cas d'ajout d'autres PID
+    # le cas d'ajout d'autres PID
+    if len(sys.argv) > 2:
         i = 0
 
-        list_pid=[]   #permet d'eviter les affichages  en double
+        # permet d'eviter les affichages  en double
+        list_pid = []
         while i < len(sys.argv):
             try:
                 int(sys.argv[i])
@@ -393,40 +396,43 @@ elif option.a:
             except:
                 pass
             i += 1
-    for pid in a_pid():     #on affiche les resultats de l'otion
+    # on affiche les resultats de l'option
+    for pid in a_pid():
         cmd_ps(pid)
-###############################################################
-                                                     #option -u
-###############################################################
+
+# option -u
 elif option.u:
-    i=0
+    i = 0
     print(USERFORMAT[:columns])
-    if len(sys.argv) > 2:          #le cas d'ajout d'autres PID
-        i=0
-        list_pid = []    #permet d'eviter les affichage  en double
+    # le cas d'ajout d'autres PID
+    if len(sys.argv) > 2:
+        i = 0
+        # permet d'eviter les affichage  en double
+        list_pid = []
         while i < len(sys.argv):
             try:
                 int(sys.argv[i])
-                PID=sys.argv[i]
-                if PID not in list_pid:
-                    PSU(PID)
-                list_pid+=[PID]
+                pid = sys.argv[i]
+                if pid not in list_pid:
+                    PSU(pid)
+                list_pid += [pid]
             except:
                 pass
-            i+=1
+            i += 1
     else:          # sinon on affiche les resultats de l'otion
         for pid in u_pid():
             PSU(pid)
-###############################################################
-                                                     #option -x
-###############################################################		
+
+# option -x
 elif option.x:
     print(NONEFORMAT[:columns])
 
-    if len(sys.argv) > 2:         #le cas d'ajout d'autres PID
-        i=0
+    # le cas d'ajout d'autres PID
+    if len(sys.argv) > 2:
+        i = 0
 
-        list_pid = []  #permet d'eviter les affichages  en double
+        # permet d'eviter les affichages  en double
+        list_pid = []
         while i < len(sys.argv):
             try:
                 int(sys.argv[i])
@@ -436,8 +442,9 @@ elif option.x:
                 list_pid += [pid]
             except:
                 pass
-            i+=1
-    for pid in x_pid():     #on affiche les resultats de l'otion
+            i += 1
+    # on affiche les resultats de l'option
+    for pid in x_pid():
         cmd_ps(pid)
 
 
@@ -448,7 +455,7 @@ elif len(sys.argv) >= 2:
     list_pid = []
     print(NONEFORMAT[:columns])
     while i < len(sys.argv):
-        if i=='-a':
+        if i == '-a':
             cmd_ps(os.getpid())
         try:
             int(sys.argv[i])
@@ -457,9 +464,9 @@ elif len(sys.argv) >= 2:
                 cmd_ps(pid)
             list_pid += [pid]
         except:
-            if i==(len(sys.argv)):
+            if i == len(sys.argv):
                 print("aucun pid renseigne existant")
-        i+=1
+        i += 1
 else:              # sinon on affiche les resultats de l'otion
     print(NONEFORMAT[:columns])
     for pid in pid_wthout_option():
