@@ -1,4 +1,7 @@
-﻿test.sh : permet de faire le test de mycopy.py ou de ps.py
+The README file of this **lunix-cmd** is not finished !
+
+
+test.sh : permet de faire le test de mycopy.py ou de ps.py
 
 execution:
 
